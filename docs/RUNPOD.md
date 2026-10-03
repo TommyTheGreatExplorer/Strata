@@ -1,6 +1,6 @@
 # Strata on RunPod Serverless
 
-Deployment preparation checked on 2026-10-02. This configuration has not yet been built or tested on RunPod hardware.
+Checked on RunPod on 2026-10-02: the original image built and the IQ2_XS model, expert pack and MTP files were prepared on a persistent volume. The original engine then exited before READY. The portable CPU build below still needs a successful startup and inference test; do not treat image build success as a working model.
 
 ## Repository and image
 
@@ -48,6 +48,8 @@ A starting target is a supported 24 GB NVIDIA GPU, at least 64 GB allocated syst
 
 The Dockerfile uses CUDA 13.0 and requires NVIDIA driver 580 or newer. Its default GPU architectures are 75, 80, 86, 89 and 120; other GPUs need the correct CUDA_ARCHITECTURES build argument. Confirm the chosen worker is compatible before paying for model setup.
 
+Docker builds now enable STRATA_PORTABLE: the build machine and GPU worker can have different CPUs, so ggml must use the AVX2 baseline instead of the build machine's native instruction set. BUILD_VISION defaults to 0 for this text-only deployment; pass BUILD_VISION=1 when building an image for vision.
+
 The upstream entrypoint detects host RAM rather than a container memory cap. If the assigned memory is insufficient, choose a suitable smaller model or evaluate LOW_RAM=on; that mode can depend heavily on storage throughput. Do not assume a small GPU tier supplies 64 GB system RAM.
 
 ## First start and validation
@@ -58,6 +60,8 @@ The upstream entrypoint detects host RAM rather than a container memory cap. If 
 4. Watch worker logs. The server's HTTP port opens after engine loading. The initial download may exceed RunPod startup/health limits; if it repeatedly restarts, pre-populate the same model directory using a controlled bootstrap workload before serving requests.
 5. Verify /health, then /v1/models and a small /v1/chat/completions request. Test streaming separately and confirm client and platform authentication requirements.
 6. Let the worker scale to zero and verify files persist and the next start skips downloading.
+
+RunPod's gateway requires its own endpoint-scoped API key in `Authorization: Bearer <RUNPOD_API_KEY>`. Send the independent Strata secret in `x-api-key: <STRATA_API_KEY>`. This fork gives the explicit application header precedence, while ordinary direct Strata clients can continue using Bearer authentication. Never put either key in a URL, repository, or diagnostic result file. The Docker build runs `tools/test_runpod_auth.py` to check this two-key contract and rejection of wrong keys.
 
 RunPod's documented Load Balancer limits include a 2-minute wait when no worker is available and a 5.5-minute processing timeout. Cold starts may need client retries; this setup is not yet validated for long agent requests.
 
