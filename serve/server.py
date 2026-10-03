@@ -359,7 +359,7 @@ class StrataEngine:
                     self.log.close()
             except (OSError, subprocess.TimeoutExpired):
                 pass
-            raise RuntimeError("the engine exited before it was ready" + (f" (see {log})" if log else "") +
+            raise RuntimeError(f"the engine exited before it was ready (exit code {self.proc.returncode})" + (f" (see {log})" if log else "") +
                                start_failure_hint(log, log_start) + start_log_tail(log, log_start))
         # (from PR #41, midhatn) a locally built engine can sit next to another release's BUILD.json: engines that
         # report their own version (INFO engine=, 0.1.8+) win, the manifest stays the fallback for older ones
@@ -2098,7 +2098,9 @@ def make_handler(svc: Service):
             if not svc.api_key:
                 return True
             auth = self.headers.get("Authorization", "")
-            given = auth[7:].strip() if auth.lower().startswith("bearer ") else self.headers.get("x-api-key", "")
+            # A gateway such as RunPod uses Authorization for its own credential.
+            # An explicit application key therefore takes precedence over Bearer.
+            given = self.headers.get("x-api-key", "") or (auth[7:].strip() if auth.lower().startswith("bearer ") else "")
             if hmac.compare_digest(given.encode(), svc.api_key.encode()):   # #213: constant-time
                 return True
             self._json(401, {"error": {"type": "authentication_error", "message": "missing or wrong API key"}})
