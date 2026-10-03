@@ -1,6 +1,6 @@
 # Strata on RunPod Serverless
 
-Checked on RunPod on 2026-10-02: the original image built and the IQ2_XS model, expert pack and MTP files were prepared on a persistent volume. The original engine then exited before READY. The portable CPU build below still needs a successful startup and inference test; do not treat image build success as a working model.
+Checked on RunPod on 2026-10-02: the original image built and the IQ2_XS model, expert pack and MTP files were prepared on a persistent volume. The original engine then exited before READY. The portable CPU image subsequently loaded the engine and opened the authenticated API on an RTX A5000 worker. An external gateway request still timed out, so /ping now aliases /health for compatibility with the default platform probe. External inference remains to be verified; do not treat image build success as a working endpoint.
 
 ## Repository and image
 
@@ -10,7 +10,7 @@ Checked on RunPod on 2026-10-02: the original image built and the IQ2_XS model, 
 - Endpoint type: Load Balancer, for the existing OpenAI/Anthropic HTTP API and streaming.
 - Keep the image's existing entrypoint.
 
-The existing server exposes /health. Current RunPod supports HEALTH_CHECK_PATH, so a /ping code patch is unnecessary.
+This fork exposes both /health and /ping with the same response. RunPod documents HEALTH_CHECK_PATH, but the default /ping alias also works when a platform probe uses its default path.
 
 ## Endpoint settings
 
