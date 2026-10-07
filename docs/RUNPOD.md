@@ -35,7 +35,7 @@ Keep maximum workers at 1 while the model and packs are prepared: concurrent set
 | STRATA_DATA | /runpod-volume/strata |
 | FAMILY | qwen |
 | MODEL | IQ2_XS |
-| CONTEXT | 32768 |
+| CONTEXT | 65536 |
 | VISION | no |
 | GPU | 0 |
 | API_KEY | Supply a long random secret through RunPod configuration; never commit it |
@@ -66,6 +66,12 @@ RunPod's gateway requires its own endpoint-scoped API key in `Authorization: Bea
 RunPod's documented Load Balancer limits include a 2-minute wait when no worker is available and a 5.5-minute processing timeout. Cold starts may need client retries; this setup is not yet validated for long agent requests.
 
 Settings such as host, API key, context and vision are saved in the model configuration. Upstream documents REINSTALL=1 for changing saved settings; use it for reconfiguration and remove it afterward.
+
+## Upgrade baseline (2026-10-06)
+
+The deployment now targets upstream commit `82f46a8c8f475f001ad76d92f58f4a4f8ffb0253` (project version 0.1.40). Preserve the RunPod patches for portable CPU kernels, `/ping`, and separate gateway/application credentials when updating upstream. The previous fork head is `7c227a4d0bba3b7061bb8f9bada8a40b7e0bc969`; keep its image available for rollback until runtime validation succeeds.
+
+The existing persistent model configuration was verified with a 65536-token context on 2026-10-06. Keep `REINSTALL=0` for a code upgrade so cached weights and settings are reused. Active workers remain 0, maximum workers 1, and idle timeout 120 seconds. Build success alone does not establish runtime compatibility; check authenticated health, engine version, context, ordinary chat and streaming after deployment.
 
 ## Cost
 
