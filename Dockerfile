@@ -24,7 +24,8 @@
 #
 # Setup choices are env vars, read by docker-entrypoint.sh: FAMILY, MODEL, CONTEXT,
 # VISION (no | yes | cpu), KV (int8 | q4_0 | k8v4), GPU (one card) or GPUS ("0,2"
-# or "all", with LAYER_SPLIT), LOW_RAM (auto | on | off), HOST, PORT, API_KEY.
+# or "all", with LAYER_SPLIT), LOW_RAM (auto | on | off), HOST, PORT, API_KEY,
+# GGUF_DIR (GGUF files you already have), RESIDENT_BUDGET_GIB, KV_STREAMING.
 #
 # Only the model files, the prepared pack, the MTP layer and the install config
 # live in the /data volume; the engine is part of the image. Strata loads 32-62 GB
@@ -65,7 +66,8 @@ RUN python3 -m venv .venv \
     && .venv/bin/python tools/test_runpod_auth.py
 
 # llama.cpp at the pinned commit, then the engine and the image encoder, built
-# exactly the way setup.py builds them. BUILD.json is what setup.py reads to
+# with a portable AVX2 CPU baseline for workers that differ from the builder.
+# BUILD.json is what setup.py reads to
 # decide whether an engine is current: source=local with a matching src hash
 # means the first start reuses it instead of recompiling.
 RUN .venv/bin/python - <<'PYEOF'
@@ -89,6 +91,8 @@ if vision != "none":
 eng = setup.ROOT / "engine"
 eng.mkdir(exist_ok=True)
 shutil.copy2(setup.ROOT / "build" / setup.EXE, eng / setup.EXE)
+if (setup.ROOT / "build" / setup.KQ_LIB).exists():      # the K-quant MMQ prompt library (UD-Q4/Q5/Q6_K_XL files)
+    shutil.copy2(setup.ROOT / "build" / setup.KQ_LIB, eng / setup.KQ_LIB)
 if vision != "none":
     shutil.copy2(setup.ROOT / "build-vision" / "bin" / setup.VEXE, eng / setup.VEXE)
 bindir = pathlib.Path(nvcc).parent

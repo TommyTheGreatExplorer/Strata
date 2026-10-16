@@ -13,7 +13,10 @@ methods = [node for node in ast.walk(tree)
            if isinstance(node, ast.FunctionDef) and node.name == "_authorized"]
 assert len(methods) == 1, "Expected one real authentication handler"
 scope = {"hmac": hmac, "svc": SimpleNamespace(api_key="app-secret")}
-exec(compile(ast.Module(body=methods, type_ignores=[]), str(source), "exec"), scope)
+helpers = [node for node in tree.body
+           if isinstance(node, ast.FunctionDef) and node.name in {"key_list", "key_matches"}]
+assert len(helpers) == 2, "Expected upstream key matching helpers"
+exec(compile(ast.Module(body=helpers + methods, type_ignores=[]), str(source), "exec"), scope)
 authorized = scope["_authorized"]
 
 

@@ -84,3 +84,13 @@ A 150 GB standard network volume is approximately USD 10.50/month at USD 0.07/GB
 - [RunPod Load Balancer configuration and limits](https://docs.runpod.io/serverless/load-balancing/overview)
 - [RunPod network volumes](https://docs.runpod.io/storage/network-volumes)
 - [RunPod Serverless billing](https://docs.runpod.io/serverless/pricing)
+
+## Upgrade to 0.1.44.1 (2026-10-16)
+
+Merged the upstream `v0.1.44.1` release while preserving portable CPU builds, the
+text-only image default, `/ping`, and separate RunPod/application credentials.
+The authentication test now uses upstream key-matching helpers. Keep `REINSTALL=0`
+and the existing IQ2_XS model, 65536-token context, volume and scaling settings.
+Previous deployment: `b4bcbf4cb822a99becf0d9a52fd4609e4e5b440e` (0.1.40).
+Retain that release for rollback. Runtime inference validation is still required
+after the new image builds; local tests cannot validate CUDA or GPU loading.
